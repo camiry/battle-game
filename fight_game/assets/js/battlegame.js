@@ -3,23 +3,70 @@ var hp1 = $('#p1hp').width();
 var hp2 = $('#p2hp').width();
 var hpMax = 360;
 //health in percentage (easier to deal with?)
-var healthP1 = 100*(hp1/hpMax);
-var healthP2 = 100*(hp2/hpMax);
+//var life1 = 100*(hp1/hpMax);
+//var life2 = 100*(hp2/hpMax);
 //deck and card variables
 var card = 'card';//temporary stand-in with for card object
 var master_deck = [];
-var p1deck = [card];
+var p1deck = [card, card];
 	var p1attacking = [];
 	var p1defending = [];
-var p2deck = [card];
+var p2deck = [card, card];
 	var p2attacking = [];
 	var p2defending = [];
-//standard damage & defense
-var p1dmg = p1attacking.length*(36);//needs to be 10% of 360 (36) --> the 10% is equivalent to "10" damage inflicted
-var p1shield = p1defending.length*(36);
-var p2dmg = p2attacking.length*(36);//have to account for different cards later on
-var p2shield = p2defending.length*(36);
-console.log(healthP1);
+var shield = 72;
+
+//Trying out game in OOP
+
+//Player and Card objects
+//Player object
+function Player(name)
+{
+	this.name = name;
+	this.hp = 100;//if I'm not using this delete
+	this.deck = [];
+}
+
+//Card objects and resulting children; only one for now
+function Card()
+{
+	this.name = "basic";
+	this.base_dmg = 10;
+}
+
+Player.prototype.attack = function()
+{
+	var dmg_calc;//needs to be 10% of 360 (36) --> the 10% is equivalent to "10" damage inflicted
+	var dmg = 0;
+	var converter;
+	if (this.deck.length > 0)
+	{
+		for (card in this.deck)
+		{
+			dmg_calc = this.deck[card].base_dmg;
+			dmg += dmg_calc;
+			converter = (dmg/100)*360;
+		}
+	}
+	else
+	{
+		converter = 0;
+	}
+	return converter;
+}
+
+Player.prototype.defend = function()//these will be used if I decide to implement blocking w/ cards
+{
+	return;
+}
+
+Player.prototype.focus = function()//these will be used if I decide to implement blocking w/ cards
+{
+	return;
+}
+
+
+
 
 
 
@@ -27,13 +74,21 @@ console.log(healthP1);
 //game initialization happens here
 $(document).ready(function()
 {
-	$("#ng").on('click', function()
+ 	$("#ng").on('click', function()
 	{
+		//testing
+		
+		/* var p1 = new Player("Cyrus");
+		console.log(p1.name);
+		console.log(p1.hp);
+		console.log(p1.hp - p1.attack());
+		console.log(healthP1 - p1.attack()); */
+		
+		//end test
+	
 		window.alert("GET READY TO FIGHT NERD")
 		//single-player or multi-player?
 		var player_input = window.prompt("How many players? (Enter 1 or 2)");
-		$('#p1hp').width("100%");
-		$('#p2hp').width("100%");
 		if (player_input == 1)
 		{
 			mainGameSP();
@@ -48,16 +103,14 @@ $(document).ready(function()
 			window.alert("Invalid selection; enter valid option");
 			return;
 		}
-		//prepare game deck; room for card modifications
-		for (var deck_limit = 0; deck_limit <= 30; deck_limit++)
+		//prepare game deck for later; room for card modifications
+		
+		/* for (var deck_limit = 0; deck_limit <= 30; deck_limit++)
 		{
 			master_deck.push(card);
 		}
-		console.log(master_deck);
-		//set up deck visibility
-		$('#p1deck_area').append("Deck: " + p1deck.length);
-		$('#p2deck_area').append("Deck: " + p2deck.length);
-	});
+		console.log(master_deck); */
+	}); 
 });
 
 
@@ -65,9 +118,28 @@ $(document).ready(function()
 //main game function for SINGLE PLAYER; while both players still have health, game will continue
 function mainGameSP()
 {
-	var compMove;
-	var compAttack;
+	//instantiates players
+	var p1 = new Player('Cyrus');
+	var p2 = new Player('Computer');
 	var p1move;
+	var compMove;
+	$('#p1name').html(p1.name + "'s Health");
+	$('#p2name').html(p2.name + "'s Health");
+	
+	//set up health + health variables
+	$('#p1hp').width("100%");
+	$('#p2hp').width("100%");
+	
+	//instantiates deck
+	for (var cardcount = 0; cardcount < 2; cardcount++)
+	{
+		p1.deck.push(new Card());
+		p2.deck.push(new Card());
+	}
+	
+	//set up deck visibility
+	$('#p1deck_area').html("Deck: " + p1.deck.length);
+	$('#p2deck_area').html("Deck: " + p2.deck.length);
 	
 	//player 1's options
 	//player1 attack
@@ -75,70 +147,69 @@ function mainGameSP()
 	{
 		p1move = this.id;
 		//generating randomized moveset for computer
-		compTurn = Math.random();
-		//attacking
+		var compTurn = Math.random();
+		
+		//computer attacking
 		if (compTurn <= 0.33)
 			{
 				compMove = "attack";
-				compAttack = ((Math.random() * 4));//I think that 4 limits the max attack to 4 cards
-				for (var dudes = 0; dudes <= compAttack; dudes++)
-				{
-					p2deck.splice(1, 1);
-					if (p2deck.length != 0)
-					{
-						console.log(p2deck);
-						console.log(p2deck.length);
-						p2attacking.push(card);
-						console.log(p2deck.length);
-						console.log(p2attacking);
-					}
-				}
 			}
-		//defending
+			
+		//computer defending
 		else if (compTurn <= 0.66 && compTurn > 0.33)
 			{
 				compMove = "defend";
-				compDefence = ((Math.random() * 2) + 1);//2 should limit defence to 2 cards
-				for (var dudes = 0; dudes <= compAttack; dudes++)
-				{
-					p2deck.splice(0, 1);
-					if (p2deck.length != 0)
-					{
-						p2defending.push(card);
-					}
-				}
 			}
-		//focusing
+			
+		//computer focusing
 		else
 			{
 				compMove = "focus";
-				p2deck.push(card);
 			}
 		console.log(compMove);
+		
 		//conditions for attack, defence and focus
 		if (p1move == "attack" && compMove == "attack")
 		{
-			var attackers = window.prompt("How many cards are you attacking with? If you pick a number that exceeds your current deck, you will commit your entire current deck to attack.");
-			for (var dudes = 0; dudes <= attackers; dudes++)
-			{
-				p1deck.splice(1, 1);
-				if (p1deck.length != 0)
-				{
-					p1attacking.push(card);
-				}
-			}
-			console.log(p1attacking);
-			console.log(p1dmg);
-			
-			p1attacking = [];
-			p1defending = [];
-			p2attacking = [];
-			p2defending = [];
+			var dmg1 = p1.attack();
+			var dmg2 = p2.attack();
+			console.log(dmg1);
+			console.log(dmg2);
+			hp1 = hp1 - dmg2;
+			console.log(hp1);
+			hp2 = hp2 - dmg1;
+			console.log(hp2);
+			console.log(p2.deck.length);
+			$('#p1hp').width(hp1);
+			$('#p2hp').width(hp2);
+			p1.deck = [];
+			p2.deck = [];
+			$('#p1deck_area').html("Deck: " + p1.deck.length);
+			$('#p2deck_area').html("Deck: " + p2.deck.length);
 		}
+		
 		//defending
 		else if (p1move == "attack" && compMove == "defend")
 		{
-			
+			var dmg1 = p1.attack();
+			hp2 = (hp2 - dmg1) + shield;
+			$('#p2hp').width(hp2);
+			p1.deck = [];
+			$('#p1deck_area').html("Deck: " + p1.deck.length);
+			$('#p2deck_area').html("Deck: " + p2.deck.length);
+		}
+		
+		//focusing
+		else if (p1move == "attack" && compMove == "focus")
+		{
+			var dmg1 = p1.attack();
+			hp2 = hp2 - dmg1;
+			$('#p2hp').width(hp2);
+			p1.deck = [];
+			p2.deck.push(new Card());
+			$('#p1deck_area').html("Deck: " + p1.deck.length);
+			$('#p2deck_area').html("Deck: " + p2.deck.length);
+			console.log(p2.deck);
 		}
 	});
 		
@@ -152,26 +223,10 @@ function mainGameSP()
 	{
 		p1move = this.id;
 	});
-	console.log(p1move);
-	//generating randomized moveset for computer
-	compTurn = Math.random();
-	if (compTurn <= 0.33)
-		{compMove = "attack";}
-	else if (compTurn <= 0.66 && compTurn > 0.33)
-		{compMove = "defend";}
-	else
-		{compMove = "focus";}
-	console.log(compTurn);
-	console.log(compMove);
-	
 	//conditions for attack, defence and focus
 	if (p1move == "attack" && compMove == "attack")
 	{
-		var attackers = window.prompt("How many cards are you attacking with?");
 		
-		console.log(p1dmg);
-		$('#p1hp').css('width', (360 - p2dmg));
-		$('#p2hp').css('width', (360 - p1dmg));
 	}
 	else if (p1move == "attack" && compMove == "defend")
 	{
@@ -179,28 +234,19 @@ function mainGameSP()
 	}
 
 	//win conditions with deck reset implemented
-	if (healthP1 > 0 && healthP2 <= 0)
+	if (hp1 > 0 && hp2 <= 0)
 	{
 		window.alert("U WON!!!!!!");
-		master_deck = [];
-		p1deck = [card];
-		p2deck = [card];
 		return;
 	}
-	else if (healthP1 <= 0 && healthP2 > 0)
+	else if (hp1 <= 0 && hp2 > 0)
 	{
 		window.alert("the computer beat you STOP SUCKING SO BAD");
-		master_deck = [];
-		p1deck = [card];
-		p2deck = [card];
 		return;
 	}
-	else if (healthP1 <= 0 && healthP2 <= 0)
+	else if (hp1 <= 0 && hp2 <= 0)
 	{
 		window.alert("Draw! Which means computer wins by default. So you lost. Loser.");
-		master_deck = [];
-		p1deck = [card];
-		p2deck = [card];
 		return;
 	}
 }
